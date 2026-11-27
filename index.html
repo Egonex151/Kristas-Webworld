@@ -25,7 +25,7 @@
       width: 100vw;
       height: 100vh;
       margin: 0;
-      padding: 4px;
+      padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -51,10 +51,10 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 6px;
       align-items: center;
+      gap: 4px;
       background: rgba(20, 20, 20, 0.85);
-      padding: 6px 8px;
+      padding: 4px 6px;
       border-radius: 6px;
       border: 1px solid #444;
       width: max-content;
@@ -63,12 +63,12 @@
 
     input[type="text"],
     select,
-    button,
-    input[type="number"] {
-      padding: 6px 8px;
-      font-size: 14px;
+    input[type="number"],
+    button {
+      padding: 3px 5px;
+      font-size: 11px;
       border-radius: 4px;
-      border: 1px solid #444;
+      border: 1px solid #555;
       background: #2b2b2b;
       color: #fff;
     }
@@ -78,14 +78,14 @@
     }
 
     input[type="number"] {
-      width: 56px;
+      width: 50px;
     }
 
     input[type="color"] {
-      width: 32px;
-      height: 32px;
+      width: 24px;
+      height: 24px;
       padding: 0;
-      border: 1px solid #444;
+      border: 1px solid #555;
       border-radius: 4px;
       background: #2b2b2b;
       cursor: pointer;
@@ -105,12 +105,11 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      padding: 6px 10px;
+      padding: 4px 8px;
       background: transparent;
       border: 1px dashed transparent;
-      border-radius: 4px;
       color: #ffffff;
-      font-size: 32px;
+      font-size: 28px;
       font-family: sans-serif;
       white-space: pre-wrap;
       text-align: center;
@@ -125,13 +124,12 @@
     }
 
     .text-box.selected {
-      border-color: rgba(255, 255, 255, 0.6);
+      border-color: rgba(255, 255, 255, 0.5);
       background: rgba(0, 0, 0, 0.25);
     }
   </style>
 </head>
 <body>
-
   <div id="controls">
     <input type="text" id="textInput" placeholder="Enter text...">
     <select id="fontSelect">
@@ -140,16 +138,17 @@
       <option value="monospace">Monospace</option>
       <option value="cursive">Cursive</option>
     </select>
-    <input type="number" id="sizeInput" value="32" min="8" max="200" title="Font Size (px)">
+    <input type="number" id="sizeInput" value="28" min="8" max="200" title="Font Size (px)">
     <input type="color" id="colorPicker" value="#ffffff" title="Text Color">
     <button id="addBtn">Add</button>
   </div>
 
   <div class="container" id="canvasContainer">
-    <img src="20261120_102519.jpg" alt="">
+    <img src="20261126_163218.jpg" alt="">
   </div>
 
   <script>
+    const DEFAULT_TEXT = 'Your text will appear here';
     const container = document.getElementById('canvasContainer');
     const input = document.getElementById('textInput');
     const fontSelect = document.getElementById('fontSelect');
@@ -164,9 +163,9 @@
       activeBox = box;
       if (activeBox) {
         activeBox.classList.add('selected');
-        input.value = activeBox.textContent;
+        input.value = activeBox.textContent === DEFAULT_TEXT ? '' : activeBox.textContent;
         fontSelect.value = activeBox.style.fontFamily || 'sans-serif';
-        sizeInput.value = parseInt(activeBox.style.fontSize, 10) || 32;
+        sizeInput.value = parseInt(activeBox.style.fontSize, 10) || 28;
         colorPicker.value = rgbToHex(activeBox.style.color || 'rgb(255, 255, 255)');
       }
     }
@@ -177,6 +176,16 @@
       if (!result) return '#ffffff';
       return '#' + result.slice(0, 3).map(x => parseInt(x, 10).toString(16).padStart(2, '0')).join('');
     }
+
+    // Auto-clear default placeholder text on focus
+    input.addEventListener('focus', () => {
+      if (input.value === DEFAULT_TEXT) {
+        input.value = '';
+      }
+      if (activeBox && activeBox.textContent === DEFAULT_TEXT) {
+        activeBox.textContent = '';
+      }
+    });
 
     // Live-edit selected box text
     input.addEventListener('input', () => {
@@ -190,9 +199,7 @@
     });
 
     sizeInput.addEventListener('input', () => {
-      if (activeBox && sizeInput.value) {
-        activeBox.style.fontSize = sizeInput.value + 'px';
-      }
+      if (activeBox) activeBox.style.fontSize = sizeInput.value + 'px';
     });
 
     colorPicker.addEventListener('input', () => {
@@ -212,30 +219,37 @@
       box.className = 'text-box';
       box.textContent = text;
       box.style.fontFamily = fontSelect.value;
-      box.style.fontSize = (sizeInput.value || 32) + 'px';
+      box.style.fontSize = sizeInput.value + 'px';
       box.style.color = colorPicker.value;
 
       container.appendChild(box);
 
-      // Convert initial centered % position to exact px so dragging is seamless
+      // Convert centered transform to pixel position so dragging is seamless
       const rect = box.getBoundingClientRect();
       const parentRect = container.getBoundingClientRect();
       box.style.left = (rect.left - parentRect.left) + 'px';
       box.style.top = (rect.top - parentRect.top) + 'px';
       box.style.transform = 'none';
 
-      makeDraggable(box);
+      makeDraggableAndZoomable(box);
       selectBox(box);
     }
 
     addBtn.addEventListener('click', () => {
-      const text = input.value.trim() || 'Your text here';
+      const text = input.value.trim() || DEFAULT_TEXT;
       createTextBox(text);
     });
 
-    function makeDraggable(el) {
+    function getTouchDistance(t1, t2) {
+      return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    }
+
+    function makeDraggableAndZoomable(el) {
       let isDragging = false;
+      let isPinching = false;
       let startX, startY, initialLeft, initialTop;
+      let startDist = 0;
+      let startFontSize = 28;
 
       function startDrag(clientX, clientY) {
         selectBox(el);
@@ -244,6 +258,7 @@
         startY = clientY;
         initialLeft = el.offsetLeft;
         initialTop = el.offsetTop;
+        container.appendChild(el);
       }
 
       function moveDrag(clientX, clientY) {
@@ -256,6 +271,7 @@
         isDragging = false;
       }
 
+      // Mouse drag
       el.addEventListener('mousedown', (e) => {
         e.stopPropagation();
         startDrag(e.clientX, e.clientY);
@@ -267,26 +283,60 @@
 
       window.addEventListener('mouseup', endDrag);
 
+      // Touch drag + pinch-to-zoom
       el.addEventListener('touchstart', (e) => {
-        if (e.touches.length !== 1) return;
         e.stopPropagation();
-        const touch = e.touches[0];
-        startDrag(touch.clientX, touch.clientY);
-      }, { passive: true });
+        if (e.touches.length === 1) {
+          isPinching = false;
+          const touch = e.touches[0];
+          startDrag(touch.clientX, touch.clientY);
+        } else if (e.touches.length === 2) {
+          e.preventDefault();
+          isDragging = false;
+          isPinching = true;
+          selectBox(el);
+          startDist = getTouchDistance(e.touches[0], e.touches[1]);
+          startFontSize = parseFloat(el.style.fontSize) || 28;
+        }
+      }, { passive: false });
 
       window.addEventListener('touchmove', (e) => {
-        if (!isDragging || e.touches.length !== 1) return;
-        const touch = e.touches[0];
-        moveDrag(touch.clientX, touch.clientY);
-      }, { passive: true });
+        if (isPinching && e.touches.length === 2) {
+          e.preventDefault();
+          const currentDist = getTouchDistance(e.touches[0], e.touches[1]);
+          if (startDist > 0) {
+            const scale = currentDist / startDist;
+            const newSize = Math.min(200, Math.max(8, Math.round(startFontSize * scale)));
+            el.style.fontSize = newSize + 'px';
+            if (activeBox === el) {
+              sizeInput.value = newSize;
+            }
+          }
+        } else if (isDragging && e.touches.length === 1) {
+          e.preventDefault();
+          const touch = e.touches[0];
+          moveDrag(touch.clientX, touch.clientY);
+        }
+      }, { passive: false });
 
-      window.addEventListener('touchend', endDrag);
-      window.addEventListener('touchcancel', endDrag);
+      window.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+          isPinching = false;
+        }
+        if (e.touches.length === 0) {
+          endDrag();
+        }
+      });
+
+      window.addEventListener('touchcancel', () => {
+        isPinching = false;
+        endDrag();
+      });
     }
 
     // Create default centered text on load
     window.addEventListener('DOMContentLoaded', () => {
-      createTextBox('Your text will appear here');
+      createTextBox(DEFAULT_TEXT);
     });
   </script>
 </body>

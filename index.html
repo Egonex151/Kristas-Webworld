@@ -183,8 +183,6 @@
     <select id="imageSelect" title="Select Image">
       <option value="">-- Select Image --</option>
     </select>
-    <input type="file" id="imageUpload" accept="image/*" multiple hidden>
-    <button id="uploadBtn" type="button" title="Upload image files to list">Upload</button>
     <button id="addBtn" type="button">Add</button>
   </div>
 
@@ -195,12 +193,9 @@
   <script>
     const DEFAULT_TEXT = 'Your text will appear here';
 
-    // List of pre-uploaded image files in your project folder/server
-    const uploadedImages = [
-      { label: '20261126_163218.jpg', src: '20261126_163218.jpg' }
-      // Add additional uploaded files here, e.g.:
-      // { label: 'Photo 2', src: 'photo2.jpg' },
-      // { label: 'Photo 3', src: 'images/photo3.png' }
+    const imageList = [
+      { label: '20261127_230626.jpg', src: '20261127_230626.jpg' },
+      { label: '20261127_230650.jpg', src: '20261127_230650.jpg' }
     ];
 
     const container = document.getElementById('canvasContainer');
@@ -210,18 +205,9 @@
     const sizeInput = document.getElementById('sizeInput');
     const colorPicker = document.getElementById('colorPicker');
     const imageSelect = document.getElementById('imageSelect');
-    const imageUpload = document.getElementById('imageUpload');
-    const uploadBtn = document.getElementById('uploadBtn');
     const addBtn = document.getElementById('addBtn');
 
     let activeBox = null;
-
-    function addImageOption(label, src) {
-      const option = document.createElement('option');
-      option.value = src;
-      option.textContent = label;
-      imageSelect.appendChild(option);
-    }
 
     function showSelectedImage(src) {
       if (src) {
@@ -233,33 +219,15 @@
       }
     }
 
-    // Populate dropdown with pre-uploaded image list
-    uploadedImages.forEach(img => addImageOption(img.label, img.src));
+    imageList.forEach(img => {
+      const option = document.createElement('option');
+      option.value = img.src;
+      option.textContent = img.label;
+      imageSelect.appendChild(option);
+    });
 
-    // Switch displayed image when dropdown selection changes
     imageSelect.addEventListener('change', () => {
       showSelectedImage(imageSelect.value);
-    });
-
-    // Allow uploading additional image files from device into the dropdown list
-    uploadBtn.addEventListener('click', () => {
-      imageUpload.click();
-    });
-
-    imageUpload.addEventListener('change', () => {
-      const files = Array.from(imageUpload.files);
-      if (!files.length) return;
-
-      let firstAddedSrc = null;
-      files.forEach(file => {
-        const objectUrl = URL.createObjectURL(file);
-        addImageOption(file.name, objectUrl);
-        if (!firstAddedSrc) firstAddedSrc = objectUrl;
-      });
-
-      imageSelect.value = firstAddedSrc;
-      showSelectedImage(firstAddedSrc);
-      imageUpload.value = '';
     });
 
     function selectBox(box) {
@@ -442,11 +410,11 @@
       });
     }
 
-    // Create default centered text on load
+    // Load default image and centered text on startup
     window.addEventListener('DOMContentLoaded', () => {
-      if (uploadedImages.length > 0) {
-        imageSelect.value = uploadedImages[0].src;
-        showSelectedImage(uploadedImages[0].src);
+      if (imageList.length > 0) {
+        imageSelect.value = imageList[0].src;
+        showSelectedImage(imageList[0].src);
       }
       createTextBox(DEFAULT_TEXT);
     });

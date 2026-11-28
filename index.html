@@ -29,11 +29,47 @@
       align-items: center;
     }
 
-    #controls {
+    #topBar {
       position: relative;
       z-index: 1000;
       flex-shrink: 0;
-      margin: 6px auto 0;
+      width: 100%;
+      padding: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #thumbnailGrid {
+      display: grid;
+      grid-template-columns: repeat(2, 36px);
+      gap: 4px;
+      background: rgba(20, 20, 20, 0.85);
+      padding: 4px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      flex-shrink: 0;
+    }
+
+    .thumb {
+      width: 36px;
+      height: 36px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .thumb.active {
+      border-color: #ffffff;
+    }
+
+    #controls {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
@@ -43,8 +79,7 @@
       padding: 4px 6px;
       border-radius: 6px;
       border: 1px solid #444;
-      width: max-content;
-      max-width: calc(100vw - 12px);
+      max-width: 100%;
     }
 
     .container {
@@ -53,7 +88,7 @@
       flex: 1;
       min-height: 0;
       margin: 0;
-      padding: 8px 6px 6px;
+      padding: 4px 6px 6px;
       display: flex;
       justify-content: center;
       align-items: flex-start;
@@ -76,8 +111,7 @@
 
     input[type="text"],
     select,
-    input[type="number"],
-    button {
+    input[type="number"] {
       padding: 3px 5px;
       font-size: 11px;
       border-radius: 4px;
@@ -88,10 +122,6 @@
 
     input[type="text"] {
       width: 140px;
-    }
-
-    #imageSelect {
-      max-width: 150px;
     }
 
     input[type="number"] {
@@ -106,15 +136,6 @@
       border-radius: 4px;
       background: #2b2b2b;
       cursor: pointer;
-    }
-
-    button {
-      cursor: pointer;
-      background: #3a3a3a;
-    }
-
-    button:active {
-      background: #555;
     }
 
     .text-box {
@@ -147,43 +168,43 @@
   </style>
 </head>
 <body>
-  <div id="controls">
-    <input type="text" id="textInput" placeholder="Enter text...">
-    <select id="fontSelect" title="Font Style">
-      <option value="sans-serif">Sans-Serif</option>
-      <option value="serif">Serif</option>
-      <option value="monospace">Monospace</option>
-      <option value="cursive">Cursive</option>
-      <option value="fantasy">Fantasy</option>
-      <option value="Arial, Helvetica, sans-serif">Arial</option>
-      <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-      <option value="Verdana, Geneva, sans-serif">Verdana</option>
-      <option value="Impact, Charcoal, sans-serif">Impact</option>
-      <option value="Georgia, serif">Georgia</option>
-      <option value="'Times New Roman', Times, serif">Times New Roman</option>
-      <option value="'Courier New', Courier, monospace">Courier New</option>
-      <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
-      <option value="'Roboto', sans-serif">Roboto</option>
-      <option value="'Montserrat', sans-serif">Montserrat</option>
-      <option value="'Oswald', sans-serif">Oswald</option>
-      <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
-      <option value="'Playfair Display', serif">Playfair Display</option>
-      <option value="'Cinzel', serif">Cinzel</option>
-      <option value="'Abril Fatface', serif">Abril Fatface</option>
-      <option value="'Lobster', cursive">Lobster</option>
-      <option value="'Pacifico', cursive">Pacifico</option>
-      <option value="'Dancing Script', cursive">Dancing Script</option>
-      <option value="'Great Vibes', cursive">Great Vibes</option>
-      <option value="'Caveat', cursive">Caveat</option>
-      <option value="'Permanent Marker', cursive">Permanent Marker</option>
-      <option value="'Press Start 2P', monospace">Press Start 2P</option>
-    </select>
-    <input type="number" id="sizeInput" value="28" min="8" max="200" title="Font Size (px)">
-    <input type="color" id="colorPicker" value="#ffffff" title="Text Color">
-    <select id="imageSelect" title="Select Image">
-      <option value="">-- Select Image --</option>
-    </select>
-    <button id="addBtn" type="button">Add</button>
+  <div id="topBar">
+    <div id="thumbnailGrid" aria-label="Image Selection"></div>
+
+    <div id="controls">
+      <input type="text" id="textInput" placeholder="Enter text...">
+      <select id="fontSelect" title="Font Style">
+        <option value="sans-serif">Sans-Serif</option>
+        <option value="serif">Serif</option>
+        <option value="monospace">Monospace</option>
+        <option value="cursive">Cursive</option>
+        <option value="fantasy">Fantasy</option>
+        <option value="Arial, Helvetica, sans-serif">Arial</option>
+        <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+        <option value="Verdana, Geneva, sans-serif">Verdana</option>
+        <option value="Impact, Charcoal, sans-serif">Impact</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="'Times New Roman', Times, serif">Times New Roman</option>
+        <option value="'Courier New', Courier, monospace">Courier New</option>
+        <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+        <option value="'Roboto', sans-serif">Roboto</option>
+        <option value="'Montserrat', sans-serif">Montserrat</option>
+        <option value="'Oswald', sans-serif">Oswald</option>
+        <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+        <option value="'Playfair Display', serif">Playfair Display</option>
+        <option value="'Cinzel', serif">Cinzel</option>
+        <option value="'Abril Fatface', serif">Abril Fatface</option>
+        <option value="'Lobster', cursive">Lobster</option>
+        <option value="'Pacifico', cursive">Pacifico</option>
+        <option value="'Dancing Script', cursive">Dancing Script</option>
+        <option value="'Great Vibes', cursive">Great Vibes</option>
+        <option value="'Caveat', cursive">Caveat</option>
+        <option value="'Permanent Marker', cursive">Permanent Marker</option>
+        <option value="'Press Start 2P', monospace">Press Start 2P</option>
+      </select>
+      <input type="number" id="sizeInput" value="28" min="8" max="200" title="Font Size (px)">
+      <input type="color" id="colorPicker" value="#ffffff" title="Text Color">
+    </div>
   </div>
 
   <div class="container" id="canvasContainer">
@@ -191,130 +212,85 @@
   </div>
 
   <script>
-    const DEFAULT_TEXT = 'Your text will appear here';
-
     const imageList = [
-      { label: '20261127_230626.jpg', src: '20261127_230626.jpg' },
-      { label: '20261127_230650.jpg', src: '20261127_230650.jpg' }
+      '20261127_230626.jpg',
+      '20261127_230650.jpg'
     ];
 
+    const thumbnailGrid = document.getElementById('thumbnailGrid');
     const container = document.getElementById('canvasContainer');
     const displayImage = document.getElementById('displayImage');
     const input = document.getElementById('textInput');
     const fontSelect = document.getElementById('fontSelect');
     const sizeInput = document.getElementById('sizeInput');
     const colorPicker = document.getElementById('colorPicker');
-    const imageSelect = document.getElementById('imageSelect');
-    const addBtn = document.getElementById('addBtn');
 
-    let activeBox = null;
+    let textBox = null;
 
-    function showSelectedImage(src) {
-      if (src) {
-        displayImage.src = src;
-        displayImage.classList.remove('hidden');
-      } else {
-        displayImage.removeAttribute('src');
-        displayImage.classList.add('hidden');
-      }
+    function selectImage(src, thumbEl) {
+      displayImage.src = src;
+      displayImage.classList.remove('hidden');
+      document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+      if (thumbEl) thumbEl.classList.add('active');
     }
 
-    imageList.forEach(img => {
-      const option = document.createElement('option');
-      option.value = img.src;
-      option.textContent = img.label;
-      imageSelect.appendChild(option);
+    imageList.forEach(src => {
+      const thumb = document.createElement('img');
+      thumb.src = src;
+      thumb.alt = src;
+      thumb.className = 'thumb';
+      thumb.addEventListener('click', () => selectImage(src, thumb));
+      thumbnailGrid.appendChild(thumb);
     });
 
-    imageSelect.addEventListener('change', () => {
-      showSelectedImage(imageSelect.value);
-    });
+    function ensureTextBox() {
+      if (textBox) return textBox;
 
-    function selectBox(box) {
-      document.querySelectorAll('.text-box').forEach(b => b.classList.remove('selected'));
-      activeBox = box;
-      if (activeBox) {
-        activeBox.classList.add('selected');
-        input.value = activeBox.textContent === DEFAULT_TEXT ? '' : activeBox.textContent;
-        fontSelect.value = activeBox.dataset.font || 'sans-serif';
-        sizeInput.value = parseInt(activeBox.style.fontSize, 10) || 28;
-        colorPicker.value = rgbToHex(activeBox.style.color || 'rgb(255, 255, 255)');
-      }
-    }
-
-    function rgbToHex(rgb) {
-      if (rgb.startsWith('#')) return rgb;
-      const result = rgb.match(/\d+/g);
-      if (!result) return '#ffffff';
-      return '#' + result.slice(0, 3).map(x => parseInt(x, 10).toString(16).padStart(2, '0')).join('');
-    }
-
-    // Auto-clear default placeholder text on focus
-    input.addEventListener('focus', () => {
-      if (input.value === DEFAULT_TEXT) {
-        input.value = '';
-      }
-      if (activeBox && activeBox.textContent === DEFAULT_TEXT) {
-        activeBox.textContent = '';
-      }
-    });
-
-    // Live-edit selected box text
-    input.addEventListener('input', () => {
-      if (activeBox) {
-        activeBox.textContent = input.value;
-      }
-    });
-
-    fontSelect.addEventListener('change', () => {
-      if (activeBox) {
-        activeBox.style.fontFamily = fontSelect.value;
-        activeBox.dataset.font = fontSelect.value;
-      }
-    });
-
-    sizeInput.addEventListener('input', () => {
-      if (activeBox) activeBox.style.fontSize = sizeInput.value + 'px';
-    });
-
-    colorPicker.addEventListener('input', () => {
-      if (activeBox) activeBox.style.color = colorPicker.value;
-    });
-
-    // Deselect active text box when tapping empty container/background without clearing the text input
-    container.addEventListener('pointerdown', (e) => {
-      if (e.target === container || e.target.tagName === 'IMG') {
-        selectBox(null);
-      }
-    });
-
-    function createTextBox(text) {
       const box = document.createElement('div');
-      box.className = 'text-box';
-      box.textContent = text;
+      box.className = 'text-box selected';
       box.style.fontFamily = fontSelect.value;
-      box.dataset.font = fontSelect.value;
       box.style.fontSize = sizeInput.value + 'px';
       box.style.color = colorPicker.value;
 
       container.appendChild(box);
-
-      // Convert centered transform to pixel position so dragging is seamless
-      const rect = box.getBoundingClientRect();
-      const parentRect = container.getBoundingClientRect();
-      box.style.left = (rect.left - parentRect.left) + 'px';
-      box.style.top = (rect.top - parentRect.top) + 'px';
-      box.style.transform = 'none';
-
       makeDraggableAndZoomable(box);
-      selectBox(box);
+      textBox = box;
+      return textBox;
     }
 
-    addBtn.addEventListener('click', () => {
-      const text = input.value.trim() || DEFAULT_TEXT;
-      createTextBox(text);
-      selectBox(null);
-      input.value = '';
+    // Automatically create/update text overlay as the user types
+    input.addEventListener('input', () => {
+      const value = input.value;
+      if (value.length === 0) {
+        if (textBox) {
+          textBox.textContent = '';
+          textBox.style.display = 'none';
+        }
+        return;
+      }
+
+      const box = ensureTextBox();
+      box.style.display = 'block';
+      box.textContent = value;
+    });
+
+    fontSelect.addEventListener('change', () => {
+      if (textBox) textBox.style.fontFamily = fontSelect.value;
+    });
+
+    sizeInput.addEventListener('input', () => {
+      if (textBox) textBox.style.fontSize = sizeInput.value + 'px';
+    });
+
+    colorPicker.addEventListener('input', () => {
+      if (textBox) textBox.style.color = colorPicker.value;
+    });
+
+    // Tapping outside hides the dashed outline without clearing input or unlinking controls
+    container.addEventListener('pointerdown', (e) => {
+      if (textBox && (e.target === container || e.target === displayImage)) {
+        textBox.classList.remove('selected');
+      }
     });
 
     function getTouchDistance(t1, t2) {
@@ -328,14 +304,24 @@
       let startDist = 0;
       let startFontSize = 28;
 
+      function lockPixelPosition() {
+        if (el.style.transform !== 'none') {
+          const rect = el.getBoundingClientRect();
+          const parentRect = container.getBoundingClientRect();
+          el.style.left = (rect.left - parentRect.left) + 'px';
+          el.style.top = (rect.top - parentRect.top) + 'px';
+          el.style.transform = 'none';
+        }
+      }
+
       function startDrag(clientX, clientY) {
-        selectBox(el);
+        el.classList.add('selected');
+        lockPixelPosition();
         isDragging = true;
         startX = clientX;
         startY = clientY;
         initialLeft = el.offsetLeft;
         initialTop = el.offsetTop;
-        container.appendChild(el);
       }
 
       function moveDrag(clientX, clientY) {
@@ -369,9 +355,9 @@
           startDrag(touch.clientX, touch.clientY);
         } else if (e.touches.length === 2) {
           e.preventDefault();
+          el.classList.add('selected');
           isDragging = false;
           isPinching = true;
-          selectBox(el);
           startDist = getTouchDistance(e.touches[0], e.touches[1]);
           startFontSize = parseFloat(el.style.fontSize) || 28;
         }
@@ -385,9 +371,7 @@
             const scale = currentDist / startDist;
             const newSize = Math.min(200, Math.max(8, Math.round(startFontSize * scale)));
             el.style.fontSize = newSize + 'px';
-            if (activeBox === el) {
-              sizeInput.value = newSize;
-            }
+            sizeInput.value = newSize;
           }
         } else if (isDragging && e.touches.length === 1) {
           e.preventDefault();
@@ -410,15 +394,6 @@
         endDrag();
       });
     }
-
-    // Load default image and centered text on startup
-    window.addEventListener('DOMContentLoaded', () => {
-      if (imageList.length > 0) {
-        imageSelect.value = imageList[0].src;
-        showSelectedImage(imageList[0].src);
-      }
-      createTextBox(DEFAULT_TEXT);
-    });
   </script>
 </body>
 </html>

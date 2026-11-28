@@ -92,6 +92,7 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
+      touch-action: none;
     }
 
     .container img {
@@ -103,6 +104,7 @@
       display: block;
       user-select: none;
       -webkit-user-drag: none;
+      touch-action: none;
     }
 
     .container img.hidden {
@@ -212,6 +214,10 @@
   </div>
 
   <script>
+    const IMAGE_SCALE = 0.1; // 10% of original image dimensions
+    const MIN_FONT_SIZE = 8;
+    const MAX_FONT_SIZE = 200;
+
     const imageList = [
       'Rock 1.jpg',
       'Rock 2.jpg'
@@ -226,10 +232,31 @@
     const colorPicker = document.getElementById('colorPicker');
 
     let textBox = null;
+    let isDragging = false;
+    let isPinching = false;
+    let startX = 0;
+    let startY = 0;
+    let initialLeft = 0;
+    let initialTop = 0;
+    let startDist = 0;
+    let startFontSize = 28;
+
+    function applyImageScale() {
+      if (!displayImage.naturalWidth || !displayImage.naturalHeight) return;
+      const scaledWidth = Math.max(1, Math.round(displayImage.naturalWidth * IMAGE_SCALE));
+      const scaledHeight = Math.max(1, Math.round(displayImage.naturalHeight * IMAGE_SCALE));
+      displayImage.style.maxWidth = `min(100%, ${scaledWidth}px)`;
+      displayImage.style.maxHeight = `min(100%, ${scaledHeight}px)`;
+    }
+
+    displayImage.addEventListener('load', applyImageScale);
 
     function selectImage(src, thumbEl) {
       displayImage.src = src;
       displayImage.classList.remove('hidden');
+      if (displayImage.complete && displayImage.naturalWidth) {
+        applyImageScale();
+      }
       document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
       if (thumbEl) thumbEl.classList.add('active');
     }
@@ -243,6 +270,47 @@
       thumbnailGrid.appendChild(thumb);
     });
 
+    function lockCenterPosition(el) {
+      if (!el.style.left.endsWith('px') || !el.style.top.endsWith('px')) {
+        const rect = el.getBoundingClientRect();
+        const parentRect = container.getBoundingClientRect();
+        el.style.left = (rect.left - parentRect.left + rect.width / 2) + 'px';
+        el.style.top = (rect.top - parentRect.top + rect.height / 2) + 'px';
+      }
+    }
+
+    function startDrag(clientX, clientY) {
+      if (!textBox) return;
+      textBox.classList.add('selected');
+      lockCenterPosition(textBox);
+      isDragging = true;
+      startX = clientX;
+      startY = clientY;
+      initialLeft = parseFloat(textBox.style.left);
+      initialTop = parseFloat(textBox.style.top);
+    }
+
+    function moveDrag(clientX, clientY) {
+      if (!isDragging || !textBox) return;
+      textBox.style.left = (initialLeft + (clientX - startX)) + 'px';
+      textBox.style.top = (initialTop + (clientY - startY)) + 'px';
+    }
+
+    function endDrag() {
+      isDragging = false;
+    }
+
+    function getTouchDistance(t1, t2) {
+      return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    }
+
+    function setBoxFontSize(sizePx) {
+      if (!textBox) return;
+      const clamped = Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, sizePx));
+      textBox.style.fontSize = clamped.toFixed(1) + 'px';
+      sizeInput.value = Math.round(clamped);
+    }
+
     function ensureTextBox() {
       if (textBox) return textBox;
 
@@ -252,13 +320,16 @@
       box.style.fontSize = sizeInput.value + 'px';
       box.style.color = colorPicker.value;
 
+      box.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        startDrag(e.clientX, e.clientY);
+      });
+
       container.appendChild(box);
-      makeDraggableAndZoomable(box);
       textBox = box;
       return textBox;
     }
 
-    // Automatically create/update text overlay as the user types
     input.addEventListener('input', () => {
       const value = input.value;
       if (value.length === 0) {
@@ -286,114 +357,88 @@
       if (textBox) textBox.style.color = colorPicker.value;
     });
 
-    // Tapping outside hides the dashed outline without clearing input or unlinking controls
-    container.addEventListener('pointerdown', (e) => {
+    // Mouse drag and outside deselect
+    container.addEventListener('mousedown', (e) => {
       if (textBox && (e.target === container || e.target === displayImage)) {
         textBox.classList.remove('selected');
       }
     });
 
-    function getTouchDistance(t1, t2) {
-      return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-    }
+    window.addEventListener('mousemove', (e) => {
+      moveDrag(e.clientX, e.clientY);
+    });
 
-    function makeDraggableAndZoomable(el) {
-      let isDragging = false;
-      let isPinching = false;
-      let startX, startY, initialLeft, initialTop;
-      let startDist = 0;
-      let startFontSize = 28;
+    window.addEventListener('mouseup', endDrag);
 
-      function lockPixelPosition() {
-        if (el.style.transform !== 'none') {
-          const rect = el.getBoundingClientRect();
-          const parentRect = container.getBoundingClientRect();
-          el.style.left = (rect.left - parentRect.left) + 'px';
-          el.style.top = (rect.top - parentRect.top) + 'px';
-          el.style.transform = 'none';
-        }
+    // Touch drag (1 finger on text) + pinch-to-zoom (2 fingers anywhere in canvas)
+    container.addEventListener('touchstart', (e) => {
+      if (!textBox || textBox.style.display === 'none') return;
+
+      if (document.activeElement === input) {
+        input.blur();
       }
 
-      function startDrag(clientX, clientY) {
-        el.classList.add('selected');
-        lockPixelPosition();
-        isDragging = true;
-        startX = clientX;
-        startY = clientY;
-        initialLeft = el.offsetLeft;
-        initialTop = el.offsetTop;
-      }
-
-      function moveDrag(clientX, clientY) {
-        if (!isDragging) return;
-        el.style.left = (initialLeft + (clientX - startX)) + 'px';
-        el.style.top = (initialTop + (clientY - startY)) + 'px';
-      }
-
-      function endDrag() {
+      if (e.touches.length === 2) {
+        e.preventDefault();
         isDragging = false;
+        isPinching = true;
+        textBox.classList.add('selected');
+        startDist = getTouchDistance(e.touches[0], e.touches[1]);
+        startFontSize = parseFloat(getComputedStyle(textBox).fontSize) || 28;
+      } else if (e.touches.length === 1) {
+        if (e.target === textBox || textBox.contains(e.target)) {
+          e.preventDefault();
+          isPinching = false;
+          startDrag(e.touches[0].clientX, e.touches[0].clientY);
+        } else {
+          textBox.classList.remove('selected');
+        }
       }
+    }, { passive: false });
 
-      // Mouse drag
-      el.addEventListener('mousedown', (e) => {
-        e.stopPropagation();
-        startDrag(e.clientX, e.clientY);
-      });
+    window.addEventListener('touchmove', (e) => {
+      if (!textBox || textBox.style.display === 'none') return;
 
-      window.addEventListener('mousemove', (e) => {
-        moveDrag(e.clientX, e.clientY);
-      });
-
-      window.addEventListener('mouseup', endDrag);
-
-      // Touch drag + pinch-to-zoom
-      el.addEventListener('touchstart', (e) => {
-        e.stopPropagation();
-        if (e.touches.length === 1) {
-          isPinching = false;
-          const touch = e.touches[0];
-          startDrag(touch.clientX, touch.clientY);
-        } else if (e.touches.length === 2) {
-          e.preventDefault();
-          el.classList.add('selected');
-          isDragging = false;
-          isPinching = true;
-          startDist = getTouchDistance(e.touches[0], e.touches[1]);
-          startFontSize = parseFloat(el.style.fontSize) || 28;
+      if (isPinching && e.touches.length === 2) {
+        e.preventDefault();
+        const currentDist = getTouchDistance(e.touches[0], e.touches[1]);
+        if (startDist > 0) {
+          setBoxFontSize(startFontSize * (currentDist / startDist));
         }
-      }, { passive: false });
+      } else if (isDragging && e.touches.length === 1) {
+        e.preventDefault();
+        moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: false });
 
-      window.addEventListener('touchmove', (e) => {
-        if (isPinching && e.touches.length === 2) {
-          e.preventDefault();
-          const currentDist = getTouchDistance(e.touches[0], e.touches[1]);
-          if (startDist > 0) {
-            const scale = currentDist / startDist;
-            const newSize = Math.min(200, Math.max(8, Math.round(startFontSize * scale)));
-            el.style.fontSize = newSize + 'px';
-            sizeInput.value = newSize;
-          }
-        } else if (isDragging && e.touches.length === 1) {
-          e.preventDefault();
-          const touch = e.touches[0];
-          moveDrag(touch.clientX, touch.clientY);
-        }
-      }, { passive: false });
-
-      window.addEventListener('touchend', (e) => {
-        if (e.touches.length < 2) {
-          isPinching = false;
-        }
-        if (e.touches.length === 0) {
-          endDrag();
-        }
-      });
-
-      window.addEventListener('touchcancel', () => {
+    window.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) {
         isPinching = false;
+      }
+      if (e.touches.length === 0) {
         endDrag();
-      });
-    }
+      }
+    });
+
+    window.addEventListener('touchcancel', () => {
+      isPinching = false;
+      endDrag();
+    });
+
+    // Prevent Safari native pinch-zoom on the canvas area
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
+      container.addEventListener(evt, (e) => e.preventDefault(), { passive: false });
+    });
+
+    // Trackpad pinch-to-zoom (fires wheel with ctrlKey)
+    container.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey || !textBox || textBox.style.display === 'none') return;
+      e.preventDefault();
+      textBox.classList.add('selected');
+      const currentSize = parseFloat(getComputedStyle(textBox).fontSize) || 28;
+      const factor = Math.exp(-e.deltaY * 0.01);
+      setBoxFontSize(currentSize * factor);
+    }, { passive: false });
   </script>
 </body>
 </html>

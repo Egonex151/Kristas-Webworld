@@ -108,8 +108,7 @@
     }
 
     input[type="text"],
-    select,
-    input[type="number"] {
+    select {
       padding: 5px 8px;
       font-size: 16px;
       border-radius: 5px;
@@ -123,10 +122,6 @@
       max-width: 100%;
     }
 
-    input[type="number"] {
-      width: 72px;
-    }
-
     input[type="color"] {
       width: 36px;
       height: 36px;
@@ -137,7 +132,7 @@
       cursor: pointer;
     }
 
-    .curve-control {
+    .slider-control {
       display: inline-flex;
       align-items: center;
       gap: 5px;
@@ -149,14 +144,14 @@
       color: #fff;
     }
 
-    .curve-control input[type="range"] {
+    .slider-control input[type="range"] {
       width: 85px;
       margin: 0;
       cursor: pointer;
     }
 
-    #curveValue {
-      min-width: 34px;
+    .slider-value {
+      min-width: 38px;
       text-align: right;
       font-size: 13px;
     }
@@ -241,17 +236,21 @@
           <option value="'Permanent Marker', cursive">Permanent Marker</option>
           <option value="'Press Start 2P', monospace">Press Start 2P</option>
         </select>
-        <input type="number" id="sizeInput" value="36" min="8" max="200" title="Font Size (px)">
+        <label class="slider-control" title="Font Size (px)">
+          Size
+          <input type="range" id="sizeInput" min="8" max="200" step="2" value="36">
+          <span id="sizeValue" class="slider-value">36px</span>
+        </label>
         <select id="spacingSelect" title="Text Spacing">
           <option value="-0.06em">Space: 0.5x</option>
           <option value="0em" selected>Space: 1.0x</option>
           <option value="0.18em">Space: 1.5x</option>
           <option value="0.36em">Space: 2.0x</option>
         </select>
-        <label class="curve-control" title="Text Curve (0% flat, 5-15% horizon, 50% rainbow, 100% full U)">
+        <label class="slider-control" title="Text Curve (0% flat to 100% subtle arch)">
           Curve
           <input type="range" id="curveSlider" min="0" max="100" value="0">
-          <span id="curveValue">0%</span>
+          <span id="curveValue" class="slider-value">0%</span>
         </label>
         <input type="color" id="colorPicker" value="#ffffff" title="Text Color">
       </div>
@@ -268,6 +267,7 @@
 
   <script>
     const IMAGE_SCALE = 0.1; // 10% of original image dimensions
+    const MAX_CURVE_RADIANS = Math.PI * 0.25; // 100% slider = 25% of previous 180-deg curve (45 deg)
     const SVG_NS = 'http://www.w3.org/2000/svg';
     const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
@@ -282,6 +282,7 @@
     const input = document.getElementById('textInput');
     const fontSelect = document.getElementById('fontSelect');
     const sizeInput = document.getElementById('sizeInput');
+    const sizeValue = document.getElementById('sizeValue');
     const spacingSelect = document.getElementById('spacingSelect');
     const curveSlider = document.getElementById('curveSlider');
     const curveValue = document.getElementById('curveValue');
@@ -341,7 +342,7 @@
 
     function buildCurvedSvg(text, fontFamily, fontSize, letterSpacing, color, curvePercent) {
       const textWidth = measureTextWidth(text, fontFamily, fontSize, letterSpacing);
-      const theta = (curvePercent / 100) * Math.PI; // 0 to 180 deg (full upside-down U)
+      const theta = (curvePercent / 100) * MAX_CURVE_RADIANS;
       const minRadius = fontSize * 0.75;
       const radius = Math.max(textWidth / theta, minRadius);
 
@@ -357,8 +358,8 @@
       const cx = svgWidth / 2;
       const cy = radius + padTop;
 
-      // Pad the underlying path slightly beyond actual text span so edge letters never clip
-      const pathAlpha = Math.min(Math.PI * 1.25, Math.max(actualAlpha + 0.25, actualAlpha * 1.15));
+      const extraArc = Math.min(0.25, Math.max((fontSize * 4) / radius, actualAlpha * 0.2));
+      const pathAlpha = Math.min(Math.PI * 1.25, actualAlpha + extraArc);
       const pathHalf = pathAlpha / 2;
       const x1 = cx - radius * Math.sin(pathHalf);
       const y1 = cy - radius * Math.cos(pathHalf);
@@ -366,7 +367,7 @@
       const y2 = cy - radius * Math.cos(pathHalf);
       const largeArc = pathAlpha > Math.PI ? 1 : 0;
 
-      const pathData = `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${radius.toFixed(2)} ${radius.toFixed(2)} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+      const pathData = `M ${x1.toFixed(3)} ${y1.toFixed(3)} A ${radius.toFixed(3)} ${radius.toFixed(3)} 0 ${largeArc} 1 ${x2.toFixed(3)} ${y2.toFixed(3)}`;
 
       const svg = document.createElementNS(SVG_NS, 'svg');
       svg.setAttribute('width', svgWidth);
@@ -435,9 +436,13 @@
 
     input.addEventListener('input', renderTextBox);
     fontSelect.addEventListener('change', renderTextBox);
-    sizeInput.addEventListener('input', renderTextBox);
     spacingSelect.addEventListener('change', renderTextBox);
     colorPicker.addEventListener('input', renderTextBox);
+
+    sizeInput.addEventListener('input', () => {
+      sizeValue.textContent = sizeInput.value + 'px';
+      renderTextBox();
+    });
 
     curveSlider.addEventListener('input', () => {
       curveValue.textContent = curveSlider.value + '%';

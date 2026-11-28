@@ -281,11 +281,10 @@
       if (activeBox) activeBox.style.color = colorPicker.value;
     });
 
-    // Deselect when tapping empty container/background
+    // Deselect active text box when tapping empty container/background without clearing the text input
     container.addEventListener('pointerdown', (e) => {
       if (e.target === container || e.target.tagName === 'IMG') {
         selectBox(null);
-        input.value = '';
       }
     });
 
@@ -314,6 +313,8 @@
     addBtn.addEventListener('click', () => {
       const text = input.value.trim() || DEFAULT_TEXT;
       createTextBox(text);
+      selectBox(null);
+      input.value = '';
     });
 
     function getTouchDistance(t1, t2) {

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kristas-Webworld</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,14 +16,14 @@
       margin: 0;
       padding: 0;
       width: 100%;
-      height: 100%;
+      min-height: 100%;
       background-color: #000000;
       color: #ffffff;
       font-family: sans-serif;
-      overflow: hidden;
     }
 
     body {
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -34,31 +34,31 @@
       z-index: 1000;
       flex-shrink: 0;
       width: 100%;
-      padding: 6px;
+      padding: 12px;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       align-items: center;
-      gap: 6px;
+      gap: 12px;
     }
 
     #thumbnailGrid {
       display: grid;
-      grid-template-columns: repeat(2, 36px);
-      gap: 4px;
+      grid-template-columns: repeat(2, 72px);
+      gap: 8px;
       background: rgba(20, 20, 20, 0.85);
-      padding: 4px;
-      border-radius: 6px;
+      padding: 8px;
+      border-radius: 10px;
       border: 1px solid #444;
       flex-shrink: 0;
     }
 
     .thumb {
-      width: 36px;
-      height: 36px;
+      width: 72px;
+      height: 72px;
       object-fit: cover;
-      border-radius: 4px;
-      border: 2px solid transparent;
+      border-radius: 6px;
+      border: 3px solid transparent;
       cursor: pointer;
       display: block;
       user-select: none;
@@ -74,37 +74,34 @@
       flex-wrap: wrap;
       justify-content: center;
       align-items: center;
-      gap: 4px;
+      gap: 8px;
       background: rgba(20, 20, 20, 0.85);
-      padding: 4px 6px;
-      border-radius: 6px;
+      padding: 8px 12px;
+      border-radius: 10px;
       border: 1px solid #444;
       max-width: 100%;
     }
 
     .container {
       position: relative;
-      width: 100vw;
+      width: 100%;
       flex: 1;
-      min-height: 0;
+      min-height: 300px;
       margin: 0;
-      padding: 4px 6px 6px;
+      padding: 8px 12px 12px;
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      touch-action: none;
     }
 
     .container img {
       max-width: 100%;
-      max-height: 100%;
       width: auto;
       height: auto;
       object-fit: contain;
       display: block;
       user-select: none;
       -webkit-user-drag: none;
-      touch-action: none;
     }
 
     .container img.hidden {
@@ -114,48 +111,49 @@
     input[type="text"],
     select,
     input[type="number"] {
-      padding: 3px 5px;
-      font-size: 11px;
-      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 20px;
+      border-radius: 6px;
       border: 1px solid #555;
       background: #2b2b2b;
       color: #fff;
     }
 
     input[type="text"] {
-      width: 140px;
+      width: 240px;
+      max-width: 100%;
     }
 
     input[type="number"] {
-      width: 50px;
+      width: 84px;
     }
 
     input[type="color"] {
-      width: 24px;
-      height: 24px;
+      width: 44px;
+      height: 44px;
       padding: 0;
       border: 1px solid #555;
-      border-radius: 4px;
+      border-radius: 6px;
       background: #2b2b2b;
       cursor: pointer;
     }
 
     .text-box {
       position: absolute;
-      top: 50%;
+      top: 80px;
       left: 50%;
       transform: translate(-50%, -50%);
-      padding: 4px 8px;
+      padding: 6px 12px;
       background: transparent;
       border: 1px dashed transparent;
       color: #ffffff;
-      font-size: 28px;
+      font-size: 36px;
       font-family: sans-serif;
       white-space: pre-wrap;
       text-align: center;
       cursor: grab;
       user-select: none;
-      touch-action: none;
+      touch-action: pinch-zoom;
       z-index: 10;
     }
 
@@ -204,7 +202,7 @@
         <option value="'Permanent Marker', cursive">Permanent Marker</option>
         <option value="'Press Start 2P', monospace">Press Start 2P</option>
       </select>
-      <input type="number" id="sizeInput" value="28" min="8" max="200" title="Font Size (px)">
+      <input type="number" id="sizeInput" value="36" min="8" max="200" title="Font Size (px)">
       <input type="color" id="colorPicker" value="#ffffff" title="Text Color">
     </div>
   </div>
@@ -215,8 +213,6 @@
 
   <script>
     const IMAGE_SCALE = 0.1; // 10% of original image dimensions
-    const MIN_FONT_SIZE = 8;
-    const MAX_FONT_SIZE = 200;
 
     const imageList = [
       'Rock 1.jpg',
@@ -232,21 +228,13 @@
     const colorPicker = document.getElementById('colorPicker');
 
     let textBox = null;
-    let isDragging = false;
-    let isPinching = false;
-    let startX = 0;
-    let startY = 0;
-    let initialLeft = 0;
-    let initialTop = 0;
-    let startDist = 0;
-    let startFontSize = 28;
 
     function applyImageScale() {
       if (!displayImage.naturalWidth || !displayImage.naturalHeight) return;
       const scaledWidth = Math.max(1, Math.round(displayImage.naturalWidth * IMAGE_SCALE));
       const scaledHeight = Math.max(1, Math.round(displayImage.naturalHeight * IMAGE_SCALE));
       displayImage.style.maxWidth = `min(100%, ${scaledWidth}px)`;
-      displayImage.style.maxHeight = `min(100%, ${scaledHeight}px)`;
+      displayImage.style.maxHeight = `${scaledHeight}px`;
     }
 
     displayImage.addEventListener('load', applyImageScale);
@@ -270,47 +258,6 @@
       thumbnailGrid.appendChild(thumb);
     });
 
-    function lockCenterPosition(el) {
-      if (!el.style.left.endsWith('px') || !el.style.top.endsWith('px')) {
-        const rect = el.getBoundingClientRect();
-        const parentRect = container.getBoundingClientRect();
-        el.style.left = (rect.left - parentRect.left + rect.width / 2) + 'px';
-        el.style.top = (rect.top - parentRect.top + rect.height / 2) + 'px';
-      }
-    }
-
-    function startDrag(clientX, clientY) {
-      if (!textBox) return;
-      textBox.classList.add('selected');
-      lockCenterPosition(textBox);
-      isDragging = true;
-      startX = clientX;
-      startY = clientY;
-      initialLeft = parseFloat(textBox.style.left);
-      initialTop = parseFloat(textBox.style.top);
-    }
-
-    function moveDrag(clientX, clientY) {
-      if (!isDragging || !textBox) return;
-      textBox.style.left = (initialLeft + (clientX - startX)) + 'px';
-      textBox.style.top = (initialTop + (clientY - startY)) + 'px';
-    }
-
-    function endDrag() {
-      isDragging = false;
-    }
-
-    function getTouchDistance(t1, t2) {
-      return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-    }
-
-    function setBoxFontSize(sizePx) {
-      if (!textBox) return;
-      const clamped = Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, sizePx));
-      textBox.style.fontSize = clamped.toFixed(1) + 'px';
-      sizeInput.value = Math.round(clamped);
-    }
-
     function ensureTextBox() {
       if (textBox) return textBox;
 
@@ -320,12 +267,8 @@
       box.style.fontSize = sizeInput.value + 'px';
       box.style.color = colorPicker.value;
 
-      box.addEventListener('mousedown', (e) => {
-        e.stopPropagation();
-        startDrag(e.clientX, e.clientY);
-      });
-
       container.appendChild(box);
+      makeDraggable(box);
       textBox = box;
       return textBox;
     }
@@ -357,88 +300,85 @@
       if (textBox) textBox.style.color = colorPicker.value;
     });
 
-    // Mouse drag and outside deselect
-    container.addEventListener('mousedown', (e) => {
+    container.addEventListener('pointerdown', (e) => {
       if (textBox && (e.target === container || e.target === displayImage)) {
         textBox.classList.remove('selected');
       }
     });
 
-    window.addEventListener('mousemove', (e) => {
-      moveDrag(e.clientX, e.clientY);
-    });
+    function makeDraggable(el) {
+      let isDragging = false;
+      let startX, startY, initialLeft, initialTop;
 
-    window.addEventListener('mouseup', endDrag);
-
-    // Touch drag (1 finger on text) + pinch-to-zoom (2 fingers anywhere in canvas)
-    container.addEventListener('touchstart', (e) => {
-      if (!textBox || textBox.style.display === 'none') return;
-
-      if (document.activeElement === input) {
-        input.blur();
+      function lockPixelPosition() {
+        if (el.style.transform !== 'none') {
+          const rect = el.getBoundingClientRect();
+          const parentRect = container.getBoundingClientRect();
+          el.style.left = (rect.left - parentRect.left) + 'px';
+          el.style.top = (rect.top - parentRect.top) + 'px';
+          el.style.transform = 'none';
+        }
       }
 
-      if (e.touches.length === 2) {
-        e.preventDefault();
+      function startDrag(clientX, clientY) {
+        el.classList.add('selected');
+        lockPixelPosition();
+        isDragging = true;
+        startX = clientX;
+        startY = clientY;
+        initialLeft = el.offsetLeft;
+        initialTop = el.offsetTop;
+      }
+
+      function moveDrag(clientX, clientY) {
+        if (!isDragging) return;
+        el.style.left = (initialLeft + (clientX - startX)) + 'px';
+        el.style.top = (initialTop + (clientY - startY)) + 'px';
+      }
+
+      function endDrag() {
         isDragging = false;
-        isPinching = true;
-        textBox.classList.add('selected');
-        startDist = getTouchDistance(e.touches[0], e.touches[1]);
-        startFontSize = parseFloat(getComputedStyle(textBox).fontSize) || 28;
-      } else if (e.touches.length === 1) {
-        if (e.target === textBox || textBox.contains(e.target)) {
-          e.preventDefault();
-          isPinching = false;
-          startDrag(e.touches[0].clientX, e.touches[0].clientY);
+      }
+
+      el.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        startDrag(e.clientX, e.clientY);
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        moveDrag(e.clientX, e.clientY);
+      });
+
+      window.addEventListener('mouseup', endDrag);
+
+      el.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          e.stopPropagation();
+          const touch = e.touches[0];
+          startDrag(touch.clientX, touch.clientY);
         } else {
-          textBox.classList.remove('selected');
+          endDrag();
         }
-      }
-    }, { passive: false });
+      }, { passive: true });
 
-    window.addEventListener('touchmove', (e) => {
-      if (!textBox || textBox.style.display === 'none') return;
-
-      if (isPinching && e.touches.length === 2) {
-        e.preventDefault();
-        const currentDist = getTouchDistance(e.touches[0], e.touches[1]);
-        if (startDist > 0) {
-          setBoxFontSize(startFontSize * (currentDist / startDist));
+      window.addEventListener('touchmove', (e) => {
+        if (isDragging && e.touches.length === 1) {
+          e.preventDefault();
+          const touch = e.touches[0];
+          moveDrag(touch.clientX, touch.clientY);
+        } else if (e.touches.length > 1) {
+          endDrag();
         }
-      } else if (isDragging && e.touches.length === 1) {
-        e.preventDefault();
-        moveDrag(e.touches[0].clientX, e.touches[0].clientY);
-      }
-    }, { passive: false });
+      }, { passive: false });
 
-    window.addEventListener('touchend', (e) => {
-      if (e.touches.length < 2) {
-        isPinching = false;
-      }
-      if (e.touches.length === 0) {
-        endDrag();
-      }
-    });
+      window.addEventListener('touchend', (e) => {
+        if (e.touches.length === 0) {
+          endDrag();
+        }
+      });
 
-    window.addEventListener('touchcancel', () => {
-      isPinching = false;
-      endDrag();
-    });
-
-    // Prevent Safari native pinch-zoom on the canvas area
-    ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
-      container.addEventListener(evt, (e) => e.preventDefault(), { passive: false });
-    });
-
-    // Trackpad pinch-to-zoom (fires wheel with ctrlKey)
-    container.addEventListener('wheel', (e) => {
-      if (!e.ctrlKey || !textBox || textBox.style.display === 'none') return;
-      e.preventDefault();
-      textBox.classList.add('selected');
-      const currentSize = parseFloat(getComputedStyle(textBox).fontSize) || 28;
-      const factor = Math.exp(-e.deltaY * 0.01);
-      setBoxFontSize(currentSize * factor);
-    }, { passive: false });
+      window.addEventListener('touchcancel', endDrag);
+    }
   </script>
 </body>
 </html>
